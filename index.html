@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Espera - RED CADE</title>
+    <style>
+        :root {
+            --primary-color: #b30000; 
+            --success-color: #b30000;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        /* --- NUEVO: Estilos de los Filtros --- */
+        .panel-filtros {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 1160px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .grupo-filtro {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .grupo-filtro label {
+            font-weight: bold;
+            color: #555;
+        }
+        .grupo-filtro select {
+            padding: 10px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            min-width: 200px;
+            cursor: pointer;
+        }
+
+        /* --- Estilos de las Tarjetas --- */
+        .contenedor-turnos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tarjeta-turno {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.2s;
+        }
+        .numero-ticket {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 5px;
+        }
+        .nombre-etiqueta {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 5px;
+        }
+        .sede-etiqueta {
+            display: inline-block;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        .detalle-ticket {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn-atender {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn-atender:hover { background-color: #ffffff;border: 2px solid #b30000;color: #222}
+        .btn-atender:disabled { background-color: #a5d8b0; cursor: not-allowed; }
+
+        .btn-no-atender {
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn-no-atender:hover { background-color: #ffffff;border: 2px solid #b30000;color: #222}
+        .btn-no-atender:disabled { background-color: #a5d8b0; cursor: not-allowed; }
+        
+        .estado-conexion {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        .loader {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 1.5em;
+            color: var(--primary-color);
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Módulo de Atención SAT WEB Contingencia</h1>
+        <p>Turnos en Sala</p>
+    </div>
+
+    <div class="panel-filtros">
+        <div class="grupo-filtro">
+            <label for="filtro-sede">📍 Sede:</label>
+            <select id="filtro-sede" onchange="aplicarFiltros()">
+                <option value="TODAS">Todas las Sedes</option>
+            </select>
+        </div>
+        <div class="grupo-filtro">
+            <label for="filtro-entidad">🏢 Entidad:</label>
+            <select id="filtro-entidad" onchange="aplicarFiltros()">
+                <option value="TODAS">Todas las Entidades</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="contenedor-turnos" id="lista-turnos">
+        <div class="loader">Cargando turnos en sala...</div>
+    </div>
+
+    <div class="estado-conexion">
+        Última actualización: <span id="hora-actualizacion">--:--</span> (Se actualiza cada 30 seg)
+    </div>
+
+    <script>
+       const url_Flujo_ObtenerTurnos = "https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b7138cc5cd9941c1a687e551ea55216f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=H_azo6l78aak8ZQ2WJPd5FnbbglRdICIjTnAkWJNp_c"; 
+        const url_Flujo_MarcarAtendido = "https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c690b53d62094fd28f47ba4e7455ea40/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xIjlCv9eQxkmozuKF8Q_CmpkCQbv05ceuoueeG_O58I";
+        const url_Flujo_MarcarNoAtendido ="https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/87551517fbb748aa8b2a88b17640e3fc/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_TSsxhboiRq1I_Jb_6muXT1ZyFCqNAywFp08k15JeWc"
+
+        let turnosGlobales = [];
+
+        async function cargarTurnos() {
+            try {
+                const respuesta = await fetch(url_Flujo_ObtenerTurnos);
+                
+                // Si Automate responde con error, saltamos al catch
+                if (!respuesta.ok) throw new Error("Error en la respuesta del servidor");
+
+                turnosGlobales = await respuesta.json(); 
+                
+                actualizarDesplegables(); 
+                aplicarFiltros();         
+
+                document.getElementById('hora-actualizacion').innerText = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error("Error al obtener turnos:", error);
+                document.getElementById('lista-turnos').innerHTML = '<div class="loader" style="color:red;">Error de conexión con SharePoint. Reintentando...</div>';
+            }
+        }
+
+        function actualizarDesplegables() {
+            const selectSede = document.getElementById('filtro-sede');
+            const selectEntidad = document.getElementById('filtro-entidad');
+
+            const sedeActual = selectSede.value;
+            const entidadActual = selectEntidad.value;
+
+            const sedesUnicas = [...new Set(turnosGlobales.map(t => t.Sede))].filter(Boolean);
+            const entidadesUnicas = [...new Set(turnosGlobales.map(t => t.Entidad))].filter(Boolean);
+
+            selectSede.innerHTML = '<option value="TODAS">Todas las Sedes</option>';
+            sedesUnicas.forEach(sede => {
+                selectSede.innerHTML += `<option value="${sede}">${sede}</option>`;
+            });
+
+            selectEntidad.innerHTML = '<option value="TODAS">Todas las Entidades</option>';
+            entidadesUnicas.forEach(entidad => {
+                selectEntidad.innerHTML += `<option value="${entidad}">${entidad}</option>`;
+            });
+
+            if (sedesUnicas.includes(sedeActual)) selectSede.value = sedeActual;
+            if (entidadesUnicas.includes(entidadActual)) selectEntidad.value = entidadActual;
+        }
+
+        function aplicarFiltros() {
+            const sedeElegida = document.getElementById('filtro-sede').value;
+            const entidadElegida = document.getElementById('filtro-entidad').value;
+
+            const turnosFiltrados = turnosGlobales.filter(turno => {
+                const cumpleSede = (sedeElegida === "TODAS") || (turno.Sede === sedeElegida);
+                const cumpleEntidad = (entidadElegida === "TODAS") || (turno.Entidad === entidadElegida);
+                return cumpleSede && cumpleEntidad;
+            });
+
+            dibujarTarjetas(turnosFiltrados);
+        }
+
+        function dibujarTarjetas(datos) {
+            const contenedor = document.getElementById('lista-turnos');
+            contenedor.innerHTML = ''; 
+
+            if (datos.length === 0) {
+                contenedor.innerHTML = '<div class="loader" style="color:#28a745;">No hay turnos para estos filtros.</div>';
+                return;
+            }
+
+            datos.forEach(turno => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta-turno';
+                tarjeta.innerHTML = `
+                    <div class="nombre-etiqueta">${turno.NombreCompleto || 'N/A'}</div>
+                    <div class="numero-ticket">${turno.NumeroTicket || 'Sin Número'}</div>                    
+                    <div class="sede-etiqueta">📍 ${turno.Sede || 'N/A'}</div>
+                    <div class="detalle-ticket"><strong>${turno.Entidad || 'N/A'}</strong><br>${turno.Categoria || ''}</div>
+                    <button class="btn-atender" onclick="marcarComoAtendido('${turno.ID}', this)">
+                        ✅ Atendido
+                    </button>
+                    <button class="btn-no-atender" onclick="marcarComoNoAtendido('${turno.ID}', this)">
+                         🚫 No Atendido
+                    </button>
+                `;
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        async function marcarComoAtendido(idTurno, botonElement) {
+            botonElement.disabled = true;
+            botonElement.innerText = "Procesando...";
+
+            try {
+                const respuesta = await fetch(url_Flujo_MarcarAtendido, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ID: idTurno })
+                });
+
+                if (respuesta.ok) {
+                    cargarTurnos();
+                } else {
+                    alert("Hubo un problema actualizando el turno en SharePoint.");
+                    botonElement.disabled = false;
+                    botonElement.innerText = "✅ Atendido";
+                }
+            } catch (error) {
+                console.error("Error al marcar atendido:", error);
+                alert("Error de conexión. Revisa tu internet.");
+                botonElement.disabled = false;
+            }
+        }
+        async function marcarComoNoAtendido(idTurno, botonElement) {
+            botonElement.disabled = true;
+            botonElement.innerText = "Procesando...";
+
+            try {
+                const respuesta = await fetch(url_Flujo_MarcarNoAtendido, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ID: idTurno })
+                });
+
+                if (respuesta.ok) {
+                    cargarTurnos();
+                } else {
+                    alert("Hubo un problema actualizando el turno en SharePoint.");
+                    botonElement.disabled = false;
+                    botonElement.innerText = "🚫 No Atendido";
+                }
+            } catch (error) {
+                console.error("Error al marcar atendido:", error);
+                alert("Error de conexión. Revisa tu internet.");
+                botonElement.disabled = false;
+            }
+        }
+
+        // Iniciar el ciclo
+        cargarTurnos();
+        setInterval(cargarTurnos, 30000);
+    </script>
+</body>
+</html>
