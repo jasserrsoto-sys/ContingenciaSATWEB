@@ -18,6 +18,74 @@
             padding: 20px;
             color: #333;
         }
+        /* --- Menú Lateral (Sidebar) --- */
+        .sidebar {
+            height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            left: -250px; /* Oculto por defecto */
+            top: 0;
+            background-color: #222;
+            color: white;
+            transition: 0.3s;
+            z-index: 1000;
+            padding-top: 60px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.3);
+        }
+        .sidebar.active {
+            left: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .sidebar-menu li:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* --- Botón Hamburguesa --- */
+        .hamburger-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* --- Contenido Principal --- */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.3s;
+        }
+        
+        /* --- Vistas --- */
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -146,37 +214,68 @@
             color: var(--primary-color);
             padding: 50px;
         }
+         /* --- Iframe de Power Apps --- */
+        .iframe-container {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Módulo de Atención SAT WEB Contingencia</h1>
-        <p>Turnos en Sala</p>
-    </div>
+    <button class="hamburger-btn" onclick="toggleMenu()">☰</button>
 
-    <div class="panel-filtros">
-        <div class="grupo-filtro">
-            <label for="filtro-sede">📍 Sede:</label>
-            <select id="filtro-sede" onchange="aplicarFiltros()">
-                <option value="TODAS">Todas las Sedes</option>
-            </select>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">MENU SAT WEB</div>
+        <ul class="sidebar-menu">
+            <li onclick="switchView('generar')">➕ Generar Turno</li>
+            <li onclick="switchView('atender')">📋 Atender Turno</li>
+        </ul>
+    </nav>
+
+    <main class="main-content" id="main-content">
+        
+        <div id="view-generar" class="view">
+            <div class="header">
+                <h1>Generar Nuevo Turno</h1>
+            </div>
+            <iframe class="iframe-container" src="https://apps.powerapps.com/play/e/default-f351a7cb-f94a-4df0-9627-ae030ccef7c4/a/146adb96-7f5f-42a7-923a-fb8b9c1fd7e2?tenantId=f351a7cb-f94a-4df0-9627-ae030ccef7c4&hint=276e739b-4a2d-4f4e-b0c2-3c8453ba01b1&sourcetime=1776288463580&source=portal"></iframe>
         </div>
-        <div class="grupo-filtro">
-            <label for="filtro-entidad">🏢 Entidad:</label>
-            <select id="filtro-entidad" onchange="aplicarFiltros()">
-                <option value="TODAS">Todas las Entidades</option>
-            </select>
+
+        <div id="view-atender" class="view active">
+            <div class="header">
+                <h1>Módulo de Atención SAT WEB Contingencia</h1>
+            <p>Turnos en Sala</p>
+            </div>
+
+            <div class="panel-filtros">
+                <div class="grupo-filtro">
+                    <label for="filtro-sede">📍 Sede:</label>
+                    <select id="filtro-sede" onchange="aplicarFiltros()">
+                        <option value="TODAS">Todas las Sedes</option>
+                    </select>
+                </div>
+                <div class="grupo-filtro">
+                    <label for="filtro-entidad">🏢 Entidad:</label>
+                    <select id="filtro-entidad" onchange="aplicarFiltros()">
+                        <option value="TODAS">Todas las Entidades</option>
+                    </select>
+                </div>
+            </div>
+        
+
+            <div class="contenedor-turnos" id="lista-turnos">
+                <div class="loader">Cargando turnos en sala...</div>
+            </div>
+
+            <div class="estado-conexion">
+                Última actualización: <span id="hora-actualizacion">--:--</span> (Se actualiza cada 30 seg)
+            </div>
         </div>
-    </div>
-
-    <div class="contenedor-turnos" id="lista-turnos">
-        <div class="loader">Cargando turnos en sala...</div>
-    </div>
-
-    <div class="estado-conexion">
-        Última actualización: <span id="hora-actualizacion">--:--</span> (Se actualiza cada 30 seg)
-    </div>
+    </main>
 
     <script>
        const url_Flujo_ObtenerTurnos = "https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b7138cc5cd9941c1a687e551ea55216f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=H_azo6l78aak8ZQ2WJPd5FnbbglRdICIjTnAkWJNp_c"; 
@@ -184,6 +283,18 @@
         const url_Flujo_MarcarNoAtendido ="https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/87551517fbb748aa8b2a88b17640e3fc/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_TSsxhboiRq1I_Jb_6muXT1ZyFCqNAywFp08k15JeWc"
 
         let turnosGlobales = [];
+
+        // Lógica de navegación
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            toggleMenu(); // Cerrar menú al elegir
+            if(viewName === 'atender') cargarTurnos();
+        }
 
         async function cargarTurnos() {
             try {
@@ -312,7 +423,7 @@
                     botonElement.innerText = "🚫 No Atendido";
                 }
             } catch (error) {
-                console.error("Error al marcar atendido:", error);
+                console.error("Error al marcar No atendido:", error);
                 alert("Error de conexión. Revisa tu internet.");
                 botonElement.disabled = false;
             }
