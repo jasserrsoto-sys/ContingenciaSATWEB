@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal SAT WEB - RED CADE</title>
+    <style>
+        :root {
+            --primary-color: #b30000; 
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --sidebar-width: 250px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* --- Menú Lateral (Sidebar) --- */
+        .sidebar {
+            height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            left: -250px; /* Oculto por defecto */
+            top: 0;
+            background-color: #222;
+            color: white;
+            transition: 0.3s;
+            z-index: 1000;
+            padding-top: 60px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.3);
+        }
+        .sidebar.active {
+            left: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .sidebar-menu li:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* --- Botón Hamburguesa --- */
+        .hamburger-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* --- Contenido Principal --- */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: margin-left 0.3s;
+        }
+        
+        /* --- Vistas --- */
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.2em;
+        }
+
+        /* Estilos de las Tarjetas (Atender Turno) */
+        .panel-filtros {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 1160px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .contenedor-turnos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .tarjeta-turno {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 5px solid var(--primary-color);
+        }
+        .nombre-etiqueta { font-size: 1.6em; font-weight: bold; margin-bottom: 5px; }
+        .numero-ticket { font-size: 1.3em; color: #666; margin-bottom: 10px; }
+        .sede-etiqueta { background: #eee; padding: 3px 10px; border-radius: 15px; font-size: 0.8em; }
+        .btn-atender, .btn-no-atender {
+            width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; border: none;
+        }
+        .btn-atender { background: var(--primary-color); color: white; }
+        .btn-no-atender { background: black; color: white; }
+        
+        /* --- Iframe de Power Apps --- */
+        .iframe-container {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <button class="hamburger-btn" onclick="toggleMenu()">☰</button>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">MENU SAT WEB</div>
+        <ul class="sidebar-menu">
+            <li onclick="switchView('generar')">➕ Generar Turno</li>
+            <li onclick="switchView('atender')">📋 Atender Turno</li>
+        </ul>
+    </nav>
+
+    <main class="main-content" id="main-content">
+        
+        <div id="view-generar" class="view">
+            <div class="header">
+                <h1>Generar Nuevo Turno</h1>
+            </div>
+            <iframe class="iframe-container" src="https://apps.powerapps.com/play/e/default-f351a7cb-f94a-4df0-9627-ae030ccef7c4/a/146adb96-7f5f-42a7-923a-fb8b9c1fd7e2?tenantId=f351a7cb-f94a-4df0-9627-ae030ccef7c4&hint=276e739b-4a2d-4f4e-b0c2-3c8453ba01b1&sourcetime=1776288463580&source=portal"></iframe>
+        </div>
+
+        <div id="view-atender" class="view active">
+            <div class="header">
+                <h1>Atención de Turnos en Sala</h1>
+            </div>
+
+            <div class="panel-filtros">
+                <select id="filtro-sede" onchange="aplicarFiltros()"><option value="TODAS">Sedes</option></select>
+                <select id="filtro-entidad" onchange="aplicarFiltros()"><option value="TODAS">Entidades</option></select>
+            </div>
+
+            <div class="contenedor-turnos" id="lista-turnos">
+                <div class="loader">Cargando sala de espera...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- URLs DE POWER AUTOMATE ---
+        const url_Flujo_ObtenerTurnos = "https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b7138cc5cd9941c1a687e551ea55216f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=H_azo6l78aak8ZQ2WJPd5FnbbglRdICIjTnAkWJNp_c"; 
+        const url_Flujo_MarcarAtendido = "https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c690b53d62094fd28f47ba4e7455ea40/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xIjlCv9eQxkmozuKF8Q_CmpkCQbv05ceuoueeG_O58I";
+        const url_Flujo_MarcarNoAtendido ="https://defaultf351a7cbf94a4df09627ae030ccef7.c4.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/87551517fbb748aa8b2a88b17640e3fc/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_TSsxhboiRq1I_Jb_6muXT1ZyFCqNAywFp08k15JeWc";
+
+        let turnosGlobales = [];
+
+        // Lógica de navegación
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            toggleMenu(); // Cerrar menú al elegir
+            if(viewName === 'atender') cargarTurnos();
+        }
+
+        // Lógica de datos (Compartida de tu versión anterior)
+        async function cargarTurnos() {
+            try {
+                const respuesta = await fetch(url_Flujo_ObtenerTurnos);
+                if (!respuesta.ok) throw new Error("Error de conexión");
+                turnosGlobales = await respuesta.json(); 
+                actualizarDesplegables(); 
+                aplicarFiltros();         
+            } catch (error) {
+                document.getElementById('lista-turnos').innerHTML = '<div style="color:red; text-align:center;">Error al conectar con SharePoint.</div>';
+            }
+        }
+
+        function actualizarDesplegables() {
+            const selectSede = document.getElementById('filtro-sede');
+            const selectEntidad = document.getElementById('filtro-entidad');
+            const sedesUnicas = [...new Set(turnosGlobales.map(t => t.Sede))].filter(Boolean);
+            const entidadesUnicas = [...new Set(turnosGlobales.map(t => t.Entidad))].filter(Boolean);
+
+            selectSede.innerHTML = '<option value="TODAS">📍 Todas las Sedes</option>';
+            sedesUnicas.forEach(s => selectSede.innerHTML += `<option value="${s}">${s}</option>`);
+            
+            selectEntidad.innerHTML = '<option value="TODAS">🏢 Todas las Entidades</option>';
+            entidadesUnicas.forEach(e => selectEntidad.innerHTML += `<option value="${e}">${e}</option>`);
+        }
+
+        function aplicarFiltros() {
+            const sede = document.getElementById('filtro-sede').value;
+            const entidad = document.getElementById('filtro-entidad').value;
+            const filtrados = turnosGlobales.filter(t => (sede === "TODAS" || t.Sede === sede) && (entidad === "TODAS" || t.Entidad === entidad));
+            dibujarTarjetas(filtrados);
+        }
+
+        function dibujarTarjetas(datos) {
+            const contenedor = document.getElementById('lista-turnos');
+            contenedor.innerHTML = datos.length === 0 ? '<div style="text-align:center; width:100%;">No hay turnos activos.</div>' : '';
+            datos.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'tarjeta-turno';
+                div.innerHTML = `
+                    <div class="nombre-etiqueta">${t.NombreCompleto || 'Sin Nombre'}</div>
+                    <div class="numero-ticket">${t.NumeroTicket || 'T-000'}</div>
+                    <div class="sede-etiqueta">📍 ${t.Sede}</div>
+                    <p><strong>${t.Entidad}</strong><br>${t.Categoria || ''}</p>
+                    <button class="btn-atender" onclick="procesar('${t.ID}', 'atendido', this)">✅ Atendido</button>
+                    <button class="btn-no-atender" onclick="procesar('${t.ID}', 'no-atendido', this)">🚫 No Atendido</button>
+                `;
+                contenedor.appendChild(div);
+            });
+        }
+
+        async function procesar(id, tipo, btn) {
+            btn.disabled = true;
+            const url = tipo === 'atendido' ? url_Flujo_MarcarAtendido : url_Flujo_MarcarNoAtendido;
+            try {
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ID: id}) });
+                if (res.ok) cargarTurnos();
+                else alert("Error al actualizar");
+            } catch (e) { alert("Error de red"); }
+            btn.disabled = false;
+        }
+
+        // Inicio automático
+        cargarTurnos();
+        setInterval(cargarTurnos, 30000);
+    </script>
+</body>
+</html>
